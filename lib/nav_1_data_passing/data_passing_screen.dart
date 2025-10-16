@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 
 // The content for the "Passing Data" lesson.
-class DataPassingScreen extends StatelessWidget {
+class DataPassingScreen extends StatefulWidget {
   const DataPassingScreen({super.key});
+
+  @override
+  State<DataPassingScreen> createState() => _DataPassingScreenState();
+}
+
+class _DataPassingScreenState extends State<DataPassingScreen> {
+  final _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,18 +23,32 @@ class DataPassingScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Nav 1.0: Passing Data'),
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                // Pass data to the SecondScreen constructor.
-                builder: (context) => const _SecondScreen(message: 'Hello from the first screen!'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextFormField(
+              controller: _textController,
+              decoration: const InputDecoration(
+                labelText: 'Enter a message',
+                border: OutlineInputBorder(),
               ),
-            );
-          },
-          child: const Text('Go to Second Screen'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        _SecondScreen(message: _textController.text),
+                  ),
+                );
+              },
+              child: const Text('Go to Second Screen'),
+            ),
+          ],
         ),
       ),
     );
@@ -29,10 +56,8 @@ class DataPassingScreen extends StatelessWidget {
 }
 
 class _SecondScreen extends StatelessWidget {
-  // 1. Add a final field to hold the data.
   final String message;
 
-  // 2. Update the constructor to accept the data.
   const _SecondScreen({required this.message});
 
   @override
@@ -45,10 +70,10 @@ class _SecondScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 3. Display the received data.
             Text(
-              message,
+              message.isEmpty ? 'No message was sent' : message,
               style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             ElevatedButton(

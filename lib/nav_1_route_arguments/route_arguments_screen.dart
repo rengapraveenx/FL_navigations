@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 
 // The content for the "Route Arguments" lesson.
-class RouteArgumentsScreen extends StatelessWidget {
+class RouteArgumentsScreen extends StatefulWidget {
   const RouteArgumentsScreen({super.key});
+
+  @override
+  State<RouteArgumentsScreen> createState() => _RouteArgumentsScreenState();
+}
+
+class _RouteArgumentsScreenState extends State<RouteArgumentsScreen> {
+  final _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,23 +23,34 @@ class RouteArgumentsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Nav 1.0: Route Arguments'),
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // When we push the new screen, we can pass along any object
-            // as the `arguments`. Here, we're passing a simple String.
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const _SecondScreen(),
-                // Step 1: Provide the data to the `arguments` property of the route.
-                settings: const RouteSettings(
-                  arguments: 'Data sent via route arguments!',
-                ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextFormField(
+              controller: _textController,
+              decoration: const InputDecoration(
+                labelText: 'Enter a message for the arguments',
+                border: OutlineInputBorder(),
               ),
-            );
-          },
-          child: const Text('Push screen with arguments'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const _SecondScreen(),
+                    settings: RouteSettings(
+                      arguments: _textController.text,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Push screen with arguments'),
+            ),
+          ],
         ),
       ),
     );
@@ -38,9 +62,7 @@ class _SecondScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Step 2: Extract the arguments on the new screen.
-    // You must use ModalRoute.of(context) to access the current route's settings.
-    final String message = ModalRoute.of(context)!.settings.arguments as String;
+    final String? message = ModalRoute.of(context)!.settings.arguments as String?;
 
     return Scaffold(
       appBar: AppBar(
@@ -55,10 +77,12 @@ class _SecondScreen extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            // Step 3: Display the extracted data.
             Text(
-              message,
+              message == null || message.isEmpty
+                  ? 'No message was sent'
+                  : message,
               style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
