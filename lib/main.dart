@@ -3,6 +3,7 @@ import 'package:navigations/nav_1_basic/basic_navigation_screen.dart';
 import 'package:navigations/nav_1_data_passing/data_passing_screen.dart';
 import 'package:navigations/nav_1_data_returning/data_returning_screen.dart';
 import 'package:navigations/nav_1_named_routes/named_routes_screen.dart';
+import 'package:navigations/nav_1_on_generate_route/on_generate_route_screen.dart';
 import 'package:navigations/nav_1_restoration/restoration_screen.dart';
 import 'package:navigations/nav_1_route_arguments/route_arguments_screen.dart';
 import 'package:navigations/nav_1_stack_management/stack_management_screen.dart';
@@ -64,19 +65,25 @@ class MainMenu extends StatelessWidget {
           ),
           _buildMenuItem(
             context,
-            title: '5. Nav 1.0: Named Routes',
-            subtitle: 'Centralizing routes in the MaterialApp.',
+            title: '5. Nav 1.0: Named Routes (Simple)',
+            subtitle: 'Centralizing routes in the MaterialApp `routes` map.',
             screen: const NamedRoutesScreen(),
           ),
           _buildMenuItem(
             context,
-            title: '6. Nav 1.0: Advanced Stack Management',
+            title: '6. Nav 1.0: Named Routes (onGenerateRoute)',
+            subtitle: 'Standard pattern for passing arguments to named routes.',
+            screen: const OnGenerateRouteScreen(),
+          ),
+          _buildMenuItem(
+            context,
+            title: '7. Nav 1.0: Advanced Stack Management',
             subtitle: 'Using popUntil, pushReplacement, and more.',
             screen: const StackManagementScreen(),
           ),
           _buildMenuItem(
             context,
-            title: '7. Nav 1.0: State Restoration',
+            title: '8. Nav 1.0: State Restoration',
             subtitle: 'Using restorablePush to save/restore the stack.',
             screen: const RestorationScreen(),
           ),
@@ -103,3 +110,4 @@ class MainMenu extends StatelessWidget {
     );
   }
 }
+

@@ -231,7 +231,11 @@ ElevatedButton(
 
 ### 4. Named Routes
 
-This allows you to centralize your route definitions and navigate using simple string names.
+This allows you to centralize your route definitions and navigate using simple string names. There are two main approaches.
+
+#### Approach A: Simple `routes` Map
+
+Good for simple routes that do not require arguments.
 
 **Example:**
 
@@ -247,10 +251,45 @@ MaterialApp(
 
 // 2. Navigate using the name
 Navigator.pushNamed(context, '/details');
-
-// Note: To pass arguments with named routes, it's best to use the `onGenerateRoute`
-// property in MaterialApp, which gives you more control.
 ```
+
+#### Approach B: `onGenerateRoute` (Industry Standard)
+
+This is the recommended approach for any app with more than a few routes, especially if you need to pass arguments in a type-safe way.
+
+**How it works:**
+1. You define a callback function for the `onGenerateRoute` property of your `MaterialApp`.
+2. This function is called whenever a named route is pushed that isn't in the `routes` map.
+3. Inside the function, you inspect the route `settings` (which contain the name and arguments) and return the appropriate `MaterialPageRoute`, passing the arguments to your widget's constructor.
+
+**Example:**
+
+```dart
+// 1. Implement onGenerateRoute in MaterialApp
+MaterialApp(
+  initialRoute: '/',
+  onGenerateRoute: (settings) {
+    if (settings.name == '/product') {
+      final product = settings.arguments as Product?;
+      if (product != null) {
+        return MaterialPageRoute(
+          builder: (context) => ProductScreen(product: product),
+        );
+      }
+    }
+    // Handle other routes or return an error screen
+    return MaterialPageRoute(builder: (context) => const NotFoundScreen());
+  },
+);
+
+// 2. Navigate with arguments
+Navigator.pushNamed(
+  context, 
+  '/product',
+  arguments: Product(id: '123', name: 'Amazing Gadget'),
+);
+```
+
 
 ---
 
