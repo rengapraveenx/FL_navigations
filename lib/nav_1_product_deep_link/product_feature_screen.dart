@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // --- Data Model ---
 @immutable
@@ -17,61 +21,120 @@ class Product {
 }
 
 // --- Data Source ---
-// A hardcoded list of 20 products for our example.
 final List<Product> productDatabase = List.generate(
   20,
   (index) => Product(
     id: '${index + 1}',
     name: 'Product #${index + 1}',
-    description: 'This is the detailed description for product #${index + 1}. It is a high-quality item.',
+    description:
+        'This is the detailed description for product #${index + 1}. It is a high-quality item.',
     color: Colors.primaries[index % Colors.primaries.length],
   ),
 );
 
 // --- Main Entry Point for the Feature ---
 
-/// A self-contained feature demonstrating a product list and detail screen
-/// that can be opened via a deep link like `navigations://products/5`.
-class ProductFeatureScreen extends StatelessWidget {
+class ProductFeatureScreen extends StatefulWidget {
   const ProductFeatureScreen({super.key});
+
+  @override
+  State<ProductFeatureScreen> createState() => _ProductFeatureScreenState();
+}
+
+class _ProductFeatureScreenState extends State<ProductFeatureScreen> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  // Initialize AppLinks at the point of declaration for safety.
+  final _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    // Listen for links when the app is already running
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      // ignore: avoid_print
+      print('DEEP LINK (running): Received link: $uri');
+      _handleDeepLink(uri);
+    });
+
+    // Handle the initial link that launched the app
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      //getInitialAppLink
+      if (initialUri != null) {
+        // ignore: avoid_print
+        print('DEEP LINK (initial): Received link: $initialUri');
+        // Use a post-frame callback to ensure the navigator is ready
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _handleDeepLink(initialUri);
+          }
+        });
+      }
+    } on PlatformException {
+      // ignore: avoid_print
+      print('DEEP LINK (initial): Failed to get initial link.');
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.host == 'products' && uri.pathSegments.isNotEmpty) {
+      final productId = uri.pathSegments.first;
+      // ignore: avoid_print
+      print('DEEP LINK HANDLER: Navigating to /products/$productId');
+      _navigatorKey.currentState?.pushNamed('/products/$productId');
+    } else {
+      // ignore: avoid_print
+      print('DEEP LINK HANDLER: URI did not match expected format: $uri');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        // --- This is the core routing logic ---
-
-        // Handle the root route (`/`)
         if (settings.name == '/') {
           return MaterialPageRoute(
             builder: (context) => const _ProductListScreen(),
           );
         }
 
-        // Handle routes like `/products/1`, `/products/2`, etc.
         if (settings.name != null && settings.name!.startsWith('/products/')) {
           final productId = settings.name!.split('/').last;
-          // Find the product in our dummy database.
           final product = productDatabase.firstWhere(
             (p) => p.id == productId,
-            orElse: () => const Product(id: '-1', name: 'Not Found', description: '', color: Colors.grey),
+            orElse: () => const Product(
+              id: '-1',
+              name: 'Not Found',
+              description: '',
+              color: Colors.grey,
+            ),
           );
 
-          // If the product was not found, show an error screen.
           if (product.id == '-1') {
             return MaterialPageRoute(
-              builder: (context) => const _ErrorScreen(message: 'Product not found'),
+              builder: (context) =>
+                  const _ErrorScreen(message: 'Product not found'),
             );
           }
 
-          // If the product is found, show its detail screen.
           return MaterialPageRoute(
             builder: (context) => _ProductDetailScreen(product: product),
           );
         }
 
-        // If the route is unknown, show a generic error screen.
         return MaterialPageRoute(
           builder: (context) => const _ErrorScreen(message: 'Unknown route'),
         );
@@ -80,7 +143,7 @@ class ProductFeatureScreen extends StatelessWidget {
   }
 }
 
-// --- Screen Widgets ---
+// --- Screen Widgets (No changes needed here) ---
 
 class _ProductListScreen extends StatelessWidget {
   const _ProductListScreen();
@@ -103,8 +166,6 @@ class _ProductListScreen extends StatelessWidget {
             leading: CircleAvatar(backgroundColor: product.color),
             title: Text(product.name),
             onTap: () {
-              // When a product is tapped, navigate using its named route.
-              // This is the same path a deep link would use.
               Navigator.pushNamed(context, '/products/${product.id}');
             },
           );
@@ -121,10 +182,7 @@ class _ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: product.color,
-        title: Text(product.name),
-      ),
+      appBar: AppBar(backgroundColor: product.color, title: Text(product.name)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
@@ -158,7 +216,10 @@ class _ErrorScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Error')),
       body: Center(
-        child: Text(message, style: const TextStyle(color: Colors.red, fontSize: 18)),
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.red, fontSize: 18),
+        ),
       ),
     );
   }
