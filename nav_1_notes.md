@@ -374,6 +374,73 @@ MaterialApp(
 )
 ```
 
+---
+
+#### Native OS Configuration: The Missing Piece
+
+Having the `onGenerateRoute` logic in Flutter is only half the solution. You must also tell the native operating system (Android or iOS) which URLs should be opened by your app. This is done by editing platform-specific configuration files.
+
+**1. Android Configuration**
+
+You need to add an `<intent-filter>` to your `AndroidManifest.xml` file. This filter tells Android that your app can handle URLs with a specific scheme.
+
+-   **File to Edit**: `android/app/src/main/AndroidManifest.xml`
+-   **What to do**: Inside the `<activity>` tag that has the `LAUNCHER` intent-filter, you need to add another `<intent-filter>`.
+
+**Code to Add:**
+
+```xml
+<!-- Add this inside the <activity> tag -->
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <!-- This is where you register your scheme -->
+    <data android:scheme="navigations" />
+</intent-filter>
+```
+
+-   **Explanation of the code:**
+    -   `<action android:name="android.intent.action.VIEW" />`: This states that the intent filter can be triggered to *view* content.
+    -   `<category android:name="android.intent.category.DEFAULT" />`: Allows the app to be a default handler for the specified data type.
+    -   `<category android:name="android.intent.category.BROWSABLE" />`: This is crucial. It indicates that the app can be opened from a web browser or other sources (like a link in an email).
+    -   `<data android:scheme="navigations" />`: This is the most important line. It registers your app as a handler for any URL starting with `navigations://`.
+
+**2. iOS Configuration**
+
+For iOS, you need to add a `CFBundleURLTypes` entry to your `Info.plist` file. This registers your app's custom URL scheme.
+
+-   **File to Edit**: `ios/Runner/Info.plist`
+-   **What to do**: Add a new `<key>` for `CFBundleURLTypes` with its corresponding `<array>` of dictionaries.
+
+**Code to Add:**
+
+```xml
+<!-- Add this inside the top-level <dict> tag -->
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>com.example.navigations</string> <!-- A unique identifier for the URL type -->
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <!-- This is where you register your scheme -->
+            <string>navigations</string>
+        </array>
+    </dict>
+</array>
+```
+
+-   **Explanation of the code:**
+    -   `CFBundleURLTypes`: The top-level key for registering URL types.
+    -   `CFBundleTypeRole`: Defines the app's role with respect to the URL (e.g., Editor, Viewer). `Editor` is a common default.
+    -   `CFBundleURLName`: A unique name for this URL type, often your app's bundle ID.
+    -   `CFBundleURLSchemes`: An array of strings, where each string is a scheme your app responds to. This is where we put `navigations`.
+
+Once these native configurations are in place, clicking a link like `navigations://orders/123` on a device will correctly launch your Flutter app and pass the URL to `onGenerateRoute`.
+
 
 ---
 
@@ -443,5 +510,151 @@ Navigator.restorablePush(context, _myRestorableRouteBuilder);
 // The route builder must be a static or top-level function
 static Route<void> _myRestorableRouteBuilder(BuildContext context, Object? arguments) {
   return MaterialPageRoute(builder: (context) => const SecondScreen());
+}
+```
+
+---
+
+## Appendix: Complete Code Examples for Named Routing
+
+Here are more complete, self-contained examples for clarity.
+
+### Example 1: Simple Named Routing (`routes` map)
+
+This example shows a complete `MaterialApp` setup for static routes.
+
+```dart
+import 'package:flutter/material.dart';
+
+// Define your screen widgets
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home')),
+      body: Center(
+        child: ElevatedButton(
+          // Use the name to navigate
+          onPressed: () => Navigator.pushNamed(context, '/settings'),
+          child: const Text('Go to Settings'),
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: const Center(child: Text('This is the settings page.')),
+    );
+  }
+}
+
+// Your main app widget
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Simple Named Routes Example',
+      // The initialRoute is the entry point of the app.
+      initialRoute: '/',
+      // The routes map defines all possible static paths.
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
+    );
+  }
+}
+
+void main() {
+  runApp(const MyApp());
+}
+```
+
+### Example 2: Deep Linking with `onGenerateRoute`
+
+This example shows how `onGenerateRoute` can handle a dynamic path, like one that would come from a deep link.
+
+```dart
+import 'package:flutter/material.dart';
+
+// A screen that takes an ID
+class OrderDetailsScreen extends StatelessWidget {
+  final String orderId;
+  const OrderDetailsScreen({super.key, required this.orderId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Order #$orderId')),
+      body: Center(child: Text('Showing details for order ID: $orderId')),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home')),
+      body: Center(
+        child: ElevatedButton(
+          // This simulates a deep link navigation
+          onPressed: () => Navigator.pushNamed(context, '/orders/123'),
+          child: const Text('View Order 123 (Simulate Deep Link)'),
+        ),
+      ),
+    );
+  }
+}
+
+// Your main app widget
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Deep Link Example',
+      initialRoute: '/',
+      // Use onGenerateRoute to handle all navigation logic.
+      onGenerateRoute: (settings) {
+        // The OS would pass a path like '/orders/123' to settings.name
+        // when a deep link is clicked.
+
+        if (settings.name != null && settings.name!.startsWith('/orders/')) {
+          final orderId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (context) => OrderDetailsScreen(orderId: orderId),
+          );
+        }
+
+        // Handle the home route
+        if (settings.name == '/') {
+          return MaterialPageRoute(builder: (context) => const HomeScreen());
+        }
+
+        // If the route is unknown, you can show an error page
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text('404: Page Not Found')),
+          ),
+        );
+      },
+    );
+  }
+}
+
+void main() {
+  runApp(const MyApp());
 }
 ```

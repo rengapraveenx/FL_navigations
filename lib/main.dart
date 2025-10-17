@@ -8,6 +8,9 @@ import 'package:navigations/nav_1_restoration/restoration_screen.dart';
 import 'package:navigations/nav_1_route_arguments/route_arguments_screen.dart';
 import 'package:navigations/nav_1_stack_management/stack_management_screen.dart';
 
+import 'package:navigations/nav_1_deep_linking_example/deep_linking_screen.dart';
+import 'package:navigations/nav_1_simple_named_routes_example/simple_named_routes_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -86,6 +89,18 @@ class MainMenu extends StatelessWidget {
             title: '8. Nav 1.0: State Restoration',
             subtitle: 'Using restorablePush to save/restore the stack.',
             screen: const RestorationScreen(),
+          ),
+          _buildMenuItem(
+            context,
+            title: '9. Nav 1.0: Full Named Route Example',
+            subtitle: 'A self-contained example using the `routes` map.',
+            screen: const SimpleNamedRoutesScreen(),
+          ),
+          _buildMenuItem(
+            context,
+            title: '10. Nav 1.0: Full Deep Link Example',
+            subtitle: 'A self-contained example using `onGenerateRoute`.',
+            screen: const DeepLinkingScreen(),
           ),
         ],
       ),
