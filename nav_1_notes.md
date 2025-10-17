@@ -376,6 +376,53 @@ MaterialApp(
 
 ---
 
+#### URL Schemes, URLs, and File Associations: A Deeper Look
+
+Before configuring the native files, it's important to understand what these terms mean.
+
+**What is a URL?**
+
+A URL (Uniform Resource Locator) is simply a standardized address for a resource. The most common use is for websites (e.g., `https://google.com`), but it can point to anything: a file on a server, a mail recipient, or even a function inside a mobile app.
+
+A URL typically has a few parts: `scheme://host/path`.
+- `https://` is the scheme.
+- `google.com` is the host.
+- `/search` could be a path.
+
+**What is a URL Scheme?**
+
+The "scheme" is the very first part of the URL that defines the protocol or type of resource. It tells the device what kind of application should handle the address.
+- `http` or `https` schemes are handled by web browsers.
+- `mailto` is handled by email clients.
+- `tel` is handled by the phone dialer.
+
+By registering a **custom URL scheme** (like `navigations`), you are telling the mobile operating system: "I am creating a new type of address, and my app is the one that knows how to handle it."
+
+**Why is it Important?**
+
+Registering a custom scheme is crucial for deep linking because it gives your app a unique, public address. Without it, the operating system has no idea that a link like `navigations://orders/123` is meant for your app. It's the fundamental step that allows websites, emails, and other apps to launch your app and send it specific instructions.
+
+**How Can Your App Open a Video File? (File Association)**
+
+This is a great question and is related to, but different from, URL schemes. This is called **File Association**. You are not telling the OS to handle a custom *URL*, but rather to handle a custom *file type*.
+
+This also requires native configuration:
+
+-   **On Android**, you would add another `<intent-filter>` to `AndroidManifest.xml`. Instead of specifying a `scheme`, you would specify a `mimeType` (the type of file). To handle any video file, you would add:
+    ```xml
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="video/*" />
+    </intent-filter>
+    ```
+
+-   **On iOS**, you would add a `CFBundleDocumentTypes` key to `Info.plist`. This key contains a list of Uniform Type Identifiers (UTIs) that your app can open, for example `public.movie` for video files.
+
+While the mechanism is similar (editing native files), the goal is different. For now, we will focus on implementing the **URL Scheme** for deep linking.
+
+---
+
 #### Native OS Configuration: The Missing Piece
 
 Having the `onGenerateRoute` logic in Flutter is only half the solution. You must also tell the native operating system (Android or iOS) which URLs should be opened by your app. This is done by editing platform-specific configuration files.
@@ -400,11 +447,12 @@ You need to add an `<intent-filter>` to your `AndroidManifest.xml` file. This fi
 </intent-filter>
 ```
 
--   **Explanation of the code:**
-    -   `<action android:name="android.intent.action.VIEW" />`: This states that the intent filter can be triggered to *view* content.
-    -   `<category android:name="android.intent.category.DEFAULT" />`: Allows the app to be a default handler for the specified data type.
-    -   `<category android:name="android.intent.category.BROWSABLE" />`: This is crucial. It indicates that the app can be opened from a web browser or other sources (like a link in an email).
-    -   `<data android:scheme="navigations" />`: This is the most important line. It registers your app as a handler for any URL starting with `navigations://`.
+-   **Dissecting the `<intent-filter>`:**
+    -   **`<action>`**: The "verb" of the request. `android.intent.action.VIEW` means the user wants to *view* content.
+    -   **`<category>`**: The "adjective" providing context.
+        -   `android.intent.category.DEFAULT` is required for your app to be considered for implicit intents (like opening a link).
+        -   `android.intent.category.BROWSABLE` is required for the link to be triggerable from a web browser.
+    -   **`<data>`**: The "noun" or data type. `android:scheme="navigations"` is the most important part, registering your app to handle any URL starting with `navigations://`.
 
 **2. iOS Configuration**
 
@@ -434,10 +482,10 @@ For iOS, you need to add a `CFBundleURLTypes` entry to your `Info.plist` file. T
 ```
 
 -   **Explanation of the code:**
-    -   `CFBundleURLTypes`: The top-level key for registering URL types.
-    -   `CFBundleTypeRole`: Defines the app's role with respect to the URL (e.g., Editor, Viewer). `Editor` is a common default.
-    -   `CFBundleURLName`: A unique name for this URL type, often your app's bundle ID.
-    -   `CFBundleURLSchemes`: An array of strings, where each string is a scheme your app responds to. This is where we put `navigations`.
+    -   `CFBundleURLTypes`: The top-level key required by iOS to register any URL types.
+    -   `CFBundleTypeRole`: Defines your app's role. `Editor` is a common default, implying your app can edit/manipulate the content at the URL.
+    -   `CFBundleURLName`: A unique name for this specific URL type, often set to your app's bundle ID to ensure it doesn't conflict with other apps.
+    -   `CFBundleURLSchemes`: An array of the actual scheme strings your app will respond to. This is the most important part, where we add `navigations`.
 
 Once these native configurations are in place, clicking a link like `navigations://orders/123` on a device will correctly launch your Flutter app and pass the URL to `onGenerateRoute`.
 
