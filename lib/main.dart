@@ -10,6 +10,7 @@ import 'package:navigations/nav_1_stack_management/stack_management_screen.dart'
 
 import 'package:navigations/nav_1_deep_linking_example/deep_linking_screen.dart';
 import 'package:navigations/nav_1_simple_named_routes_example/simple_named_routes_screen.dart';
+import 'package:navigations/nav_1_product_deep_link/product_feature_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -101,6 +102,12 @@ class MainMenu extends StatelessWidget {
             title: '10. Nav 1.0: Full Deep Link Example',
             subtitle: 'A self-contained example using `onGenerateRoute`.',
             screen: const DeepLinkingScreen(),
+          ),
+          _buildMenuItem(
+            context,
+            title: '11. Nav 1.0: Deep Link Product Example',
+            subtitle: 'A complete feature demonstrating a product deep link.',
+            screen: const ProductFeatureScreen(),
           ),
         ],
       ),

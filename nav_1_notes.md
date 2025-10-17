@@ -489,6 +489,114 @@ For iOS, you need to add a `CFBundleURLTypes` entry to your `Info.plist` file. T
 
 Once these native configurations are in place, clicking a link like `navigations://orders/123` on a device will correctly launch your Flutter app and pass the URL to `onGenerateRoute`.
 
+---
+
+### Advanced: Handling Multiple File Types and Web Links
+
+You can extend your app's capabilities by adding more intent filters to handle common file types and even standard `https` web links. This makes your app a choice in the OS share sheet when a user tries to open one of these files.
+
+**1. Android: Adding Multiple Filters**
+
+In `AndroidManifest.xml`, you can stack multiple `<intent-filter>` blocks, each tailored to a specific data type.
+
+**Code Example for `AndroidManifest.xml`:**
+```xml
+<activity ...>
+    <!-- ... launcher intent ... -->
+
+    <!-- For navigations:// links -->
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="navigations" />
+    </intent-filter>
+
+    <!-- For opening web links (Requires separate setup for App Links) -->
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="your-domain.com" />
+    </intent-filter>
+
+    <!-- For opening various file types -->
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="image/*" />
+        <data android:mimeType="video/*" />
+        <data android:mimeType="audio/*" />
+        <data android:mimeType="application/pdf" />
+        <data android:mimeType="application/msword" />
+    </intent-filter>
+</activity>
+```
+*Note: Multiple `<data>` tags can be added to a single filter if the action/category are the same.*
+
+**2. iOS: Supporting Document Types (UTIs)**
+
+In `Info.plist`, you register file types by adding the `CFBundleDocumentTypes` key and specifying the Uniform Type Identifiers (UTIs) your app supports.
+
+**Code Example for `Info.plist`:**
+```xml
+<!-- For handling file types -->
+<key>CFBundleDocumentTypes</key>
+<array>
+    <dict>
+        <key>CFBundleTypeName</key>
+        <string>Image File</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+        <key>LSItemContentTypes</key>
+        <array>
+            <string>public.image</string>
+        </array>
+    </dict>
+    <dict>
+        <key>CFBundleTypeName</key>
+        <string>Video File</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+        <key>LSItemContentTypes</key>
+        <array>
+            <string>public.movie</string>
+        </array>
+    </dict>
+    <dict>
+        <key>CFBundleTypeName</key>
+        <string>Audio File</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+        <key>LSItemContentTypes</key>
+        <array>
+            <string>public.audio</string>
+        </array>
+    </dict>
+    <dict>
+        <key>CFBundleTypeName</key>
+        <string>PDF Document</string>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+        <key>LSItemContentTypes</key>
+        <array>
+            <string>com.adobe.pdf</string>
+        </array>
+    </dict>
+</array>
+
+<!-- For handling web links (Universal Links), you must configure Associated Domains -->
+<!-- This is a separate, more complex setup -->
+<key>com.apple.developer.associated-domains</key>
+<array>
+    <string>applinks:your-domain.com</string>
+</array>
+```
+
+**Important Flutter-Side Logic**
+
+Remember, adding these native configurations is only the first step. You must add logic to your Flutter code (likely in `onGenerateRoute` or a similar handler) to detect the incoming data type and navigate to the appropriate screen (e.g., an image viewer, a video player, etc.).
+
 
 ---
 
